@@ -1,16 +1,31 @@
 plugins {
     id("java")
+    id("application")
     id("me.champeau.jmh") version "0.7.2"
 }
 
+application {
+    mainClass.set("com.tngtech.java_virtual_thread_benchmark.quicksort.QuickSortRunner")
+}
+
 jmh {
+    val benchmark = findProperty("benchmark") as String?
+    if (benchmark != null) {
+        includes = listOf(benchmark)
+    }
+
     iterations = 3
     warmupIterations = 1
     threads = 1
 
-    jvmArgs.add("-Djava.util.logging.config.file=src/main/resources/logging.properties")
+    jvmArgs.addAll(listOf(
+        "-Xms2g", "-Xmx2g",
+        "-Xlog:gc*:file=gc.log:time,level,tags"
+    ))
 
-//    includes = listOf("HibernateRequestBenchmark")
+    profilers = listOf("gc")
+    resultFormat = "JSON"
+    resultsFile = project.file("build/results/jmh/results.json")
 }
 
 group = "com.tngtech"
@@ -21,11 +36,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly("org.projectlombok:lombok:1.18.30")
-    annotationProcessor("org.projectlombok:lombok:1.18.30")
+    compileOnly("org.projectlombok:lombok:1.18.40")
+    annotationProcessor("org.projectlombok:lombok:1.18.40")
 
-    testCompileOnly("org.projectlombok:lombok:1.18.30")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
+    testCompileOnly("org.projectlombok:lombok:1.18.40")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.40")
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -33,8 +48,8 @@ dependencies {
     implementation("org.postgresql:postgresql:42.5.1")
     implementation("com.zaxxer:HikariCP:5.1.0")
 
-    implementation("org.openjdk.jmh:jmh-core:1.33")
-    implementation("org.openjdk.jmh:jmh-generator-annprocess:1.33")
+    implementation("org.openjdk.jmh:jmh-core:1.37")
+    implementation("org.openjdk.jmh:jmh-generator-annprocess:1.37")
 
     implementation("io.projectreactor:reactor-core:3.4.10")
 
@@ -58,6 +73,6 @@ tasks.withType<JavaExec> {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
