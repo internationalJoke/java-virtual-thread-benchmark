@@ -20,14 +20,14 @@ public class ParallelQuickSort {
         sort(array, mode, DEFAULT_MAX_VIRTUAL_DEPTH, DEFAULT_SEQUENTIAL_THRESHOLD);
     }
 
-    public static void sort(int[] array, ThreadMode mode, int maxVirtualDepth, int sequentialThreshold) {
+    public static void sort(int[] array, ThreadMode mode, int maxDepth, int sequentialThreshold) {
         if (array == null || array.length <= 1) return;
         int effectiveThreshold = Math.max(1, sequentialThreshold);
 
         if (mode == ThreadMode.PLATFORM) {
-            ForkJoinPool.commonPool().invoke(new QuickSortTask(array, 0, array.length - 1, effectiveThreshold));
+            ForkJoinPool.commonPool().invoke(new QuickSortTask(array, 0, array.length - 1, effectiveThreshold, 0, maxDepth));
         } else {
-            virtualQuickSort(array, 0, array.length - 1, 0, maxVirtualDepth, effectiveThreshold);
+            virtualQuickSort(array, 0, array.length - 1, 0, maxDepth, effectiveThreshold);
         }
     }
 
@@ -38,27 +38,31 @@ public class ParallelQuickSort {
         private final int low;
         private final int high;
         private final int sequentialThreshold;
+        private final int depth;
+        private final int maxDepth;
 
-        QuickSortTask(int[] array, int low, int high, int sequentialThreshold) {
+        QuickSortTask(int[] array, int low, int high, int sequentialThreshold, int depth, int maxDepth) {
             this.array = array;
             this.low = low;
             this.high = high;
             this.sequentialThreshold = sequentialThreshold;
+            this.depth = depth;
+            this.maxDepth = maxDepth;
         }
 
         @Override
         protected void compute() {
             if (low >= high) return;
 
-            if (high - low < sequentialThreshold) {
+            if (high - low < sequentialThreshold || depth > maxDepth) {
                 sequentialQuickSort(array, low, high);
                 return;
             }
 
             int[] bounds = threeWayPartition(array, low, high);
 
-            QuickSortTask left = new QuickSortTask(array, low, bounds[0] - 1, sequentialThreshold);
-            QuickSortTask right = new QuickSortTask(array, bounds[1] + 1, high, sequentialThreshold);
+            QuickSortTask left = new QuickSortTask(array, low, bounds[0] - 1, sequentialThreshold, depth + 1, maxDepth);
+            QuickSortTask right = new QuickSortTask(array, bounds[1] + 1, high, sequentialThreshold, depth + 1, maxDepth);
 
             left.fork();
             right.compute();
@@ -68,11 +72,10 @@ public class ParallelQuickSort {
 
     // ==================== Virtual Thread version ====================
 
-    private static void virtualQuickSort(int[] array, int low, int high, int depth, int maxVirtualDepth,
-                                         int sequentialThreshold) {
+    private static void virtualQuickSort(int[] array, int low, int high, int depth, int maxDepth, int sequentialThreshold) {
         if (low >= high) return;
 
-        if (high - low < sequentialThreshold || depth > maxVirtualDepth) {
+        if (high - low < sequentialThreshold || depth > maxDepth) {
             sequentialQuickSort(array, low, high);
             return;
         }
@@ -82,9 +85,9 @@ public class ParallelQuickSort {
         int gt = bounds[1];
 
         Thread leftThread = Thread.ofVirtual().start(() ->
-                virtualQuickSort(array, low, lt - 1, depth + 1, maxVirtualDepth, sequentialThreshold));
+                virtualQuickSort(array, low, lt - 1, depth + 1, maxDepth, sequentialThreshold));
 
-        virtualQuickSort(array, gt + 1, high, depth + 1, maxVirtualDepth, sequentialThreshold);
+        virtualQuickSort(array, gt + 1, high, depth + 1, maxDepth, sequentialThreshold);
 
         try {
             leftThread.join();

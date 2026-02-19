@@ -19,7 +19,7 @@ jmh {
     threads = 1
 
     jvmArgs.addAll(listOf(
-        "-Xms2g", "-Xmx2g",
+        "-Xms4g", "-Xmx4g",
         "-Xlog:gc*:file=gc.log:time,level,tags"
     ))
 
@@ -44,6 +44,7 @@ dependencies {
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     implementation("org.postgresql:postgresql:42.5.1")
     implementation("com.zaxxer:HikariCP:5.1.0")
@@ -59,6 +60,8 @@ dependencies {
 
     implementation("org.hibernate.orm:hibernate-core:6.4.4.Final")
     implementation("org.hibernate.orm:hibernate-hikaricp:6.4.4.Final")
+
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<JavaCompile> {
