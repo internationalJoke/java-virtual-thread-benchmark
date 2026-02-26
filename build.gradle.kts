@@ -19,11 +19,11 @@ jmh {
     threads = 1
 
     jvmArgs.addAll(listOf(
-        "-Xms2g", "-Xmx2g",
+        "-Xms4g", "-Xmx4g",
         "-Xlog:gc*:file=gc.log:time,level,tags"
     ))
 
-    profilers = listOf("gc")
+    profilers = listOf("gc", "stack")
     resultFormat = "JSON"
     resultsFile = project.file("build/results/jmh/results.json")
 }
@@ -44,6 +44,7 @@ dependencies {
 
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     implementation("org.postgresql:postgresql:42.5.1")
     implementation("com.zaxxer:HikariCP:5.1.0")

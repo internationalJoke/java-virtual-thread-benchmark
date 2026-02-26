@@ -15,13 +15,13 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @Warmup(iterations = 2, time = 3)
 @Measurement(iterations = 5, time = 5)
-@Fork(value = 2, jvmArgs = {"-Xms2g", "-Xmx2g"})
+@Fork(value = 2, jvmArgs = {"-Xms4g", "-Xmx4g", "-Xlog:gc*:file=gc.log:time,level,tags"})
 public class QuickSortDepthBenchmark {
 
     private static final int SIZE = 100_000_000;
     private static final int SEQUENTIAL_THRESHOLD = 512;
 
-    @Param({"0", "1", "2", "4", "6", "8", "10", "12", "14", "16", "18", "20"})
+    @Param({"0", "2", "4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24", "26", "28", "30"})
     private int maxDepth;
 
     private int[] baseArray;
@@ -30,11 +30,12 @@ public class QuickSortDepthBenchmark {
     @Setup(Level.Trial)
     public void generateData() {
         baseArray = DataGenerator.generate(Distribution.RANDOM, SIZE);
+        workArray = new int[SIZE];
     }
 
     @Setup(Level.Invocation)
     public void copyArray() {
-        workArray = Arrays.copyOf(baseArray, baseArray.length);
+        System.arraycopy(baseArray, 0, workArray, 0, SIZE);
     }
 
     @Benchmark
